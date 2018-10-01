@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>听音乐,上网易云</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+        }
+
+
+        ul li {
+            list-style: none;
+        }
+
+        a {
+            text-decoration: none;
+        }
+
+        /*css为clearfix，清除浮动*/
+
+        .clearfix::before,
+        .clearfix::after {
+            content: ".";
+            height: 0;
+            line-height: 0;
+            display: block;
+            visibility: hidden;
+            clear: both;
+        }
+
+        .clearfix {
+            *zoom: 1;
+            /*IE/7/6*/
+        }
+
+
+        #content {
+            height: 100%;
+            display: flex;
+        }
+
+        .songeList {
+            width: 50%;
+            height: 100%;
+            padding: 30px 0 0 50px;
+            flex: 1;
+            float: left;
+            background-color: #000;
+            box-sizing: border-box;
+            overflow: auto;
+        }
+
+        .songeList ul {
+            height: auto;
+
+            text-align: left;
+        }
+
+        .songeList ul li {
+            width: 500px;
+            border-top: 1px solid skyblue;
+            border-left: 1px solid skyblue;
+            border-right: 1px solid skyblue;
+            padding-left: 20px;
+            line-height: 40px;
+            color: skyblue;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            overflow: hidden;
+            box-sizing: border-box;
+            background-color: pink;
+            color: #fff;
+           opacity: .8;
+        }
+
+        .songeList ul li:last-child {
+            border-bottom: 1px solid skyblue;
+        }
+
+        .search {
+            width: 500px;
+            padding: 10px 20px;
+            border-radius: 5px;
+            border: none;
+            outline: none;
+            margin-bottom: 20px;
+        }
+
+        .player {
+            position: relative;
+            width: 50px;
+            height: 100%;
+            flex: 1;
+            float: left;
+            /* background-color: salmon; */
+            text-align: center;
+            background: url("https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1538238271871&di=fd3fd23b22b9f40914ee30db93d0c441&imgtype=0&src=http%3A%2F%2Fpic.58pic.com%2F58pic%2F14%2F63%2F75%2F44i58PICYWn_1024.jpg");
+
+        }
+
+        .songImg {
+            position: absolute;
+            top: 150px;
+            left: 50%;
+            width: 150px;
+            height: 150px;
+            margin-top:-75px;
+            margin-left:-75px;
+            border-radius: 50%;
+            border:30px solid #000;
+            animation: autoRotate 100s infinite linear;
+        }
+
+        .musicBox {
+            position: absolute;
+            top: 350px;
+            left: 50%;
+            transform: translate(-40%, -50%);
+        }
+
+        /* 版本动画 */
+        @keyframes autoRotate{
+            from{
+                transform:rotateZ(0deg);
+            }
+            50%{
+                transform:rotateZ(180deg);
+                
+            }
+            to{
+                transform:rotateZ(360deg);
+            }
+        }
+        .rotate{
+            animation: autoRotate 100s infinite linear;
+        }
+        .pause{
+            animation-play-state: paused;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="content">
+        <div class="songeList">
+            <input type="search" v-model="songValue" @keyup.enter="searchSong" placeholder="请输入你想听的歌曲" class="search">
+            <ul>
+                <li v-for="item in songArr" @dblclick="playMicuse(item.id)">{{item.name}}--{{item.artists[0].name}}</li>
+                <!-- <li>醉赤壁--林俊杰</li>
+                <li>丑八怪--薛之谦</li> -->
+            </ul>
+        </div>
+        <div class="player">
+            <img :src="songImg==''?'https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1538231746262&di=94001d76f93cedf222f47581e1d6df92&imgtype=0&src=http%3A%2F%2Fimg4.duitang.com%2Fuploads%2Fitem%2F201501%2F25%2F20150125094246_xBn2x.jpeg':songImg"
+                alt="" class="songImg">
+            <audio :src="playSrc" autoplay controls class="musicBox"></audio>
+        </div>
+    </div>
+    <script src="./lib/vue.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue-resource@1.5.1"></script>
+
+    <script>
+        let app = new Vue({
+            el: "#content",
+            data: {
+                songValue: "",     //用户的输入搜索关键词
+                songArr: []  ,     //搜索的歌曲
+                playSrc:"",           //播放的音乐
+                songImg:""         //音乐照片
+            },
+            methods: {
+                //回车搜索歌曲
+                searchSong() {
+                    this.$http.get("https://autumnfish.cn/search?keywords=" + this.songValue).then(data => {
+                        //保存返回来的数据
+                        this.songArr = data.data.result.songs;
+                    })
+                },
+                //双击播放歌曲
+                playMicuse(id) {
+                    //获取歌曲信息
+                    this.$http.get("https://autumnfish.cn/music/url?id=" + id).then(data => {
+                        //保存返回来的数据
+                        //console.log(data)
+                         this.playSrc=data.data.data[0].url;
+                        //  console.log(this.playSrc)
+                    })
+                    //获取歌曲头像
+                    this.$http.get("https://autumnfish.cn/song/detail?ids=" + id).then(data => {
+                        //保存返回来的数据
+                        // console.log(data.data.songs[0].al.picUrl)
+                          this.songImg=data.data.songs[0].al.picUrl;
+                        //  console.log(this.playSrc)
+                    })
+                }
+            }
+        })
+
+        document.querySelector("audio").onplay=function(){
+            
+        }
+
+    </script>
+</body>
+
+</html>
